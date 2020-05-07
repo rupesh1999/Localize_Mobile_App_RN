@@ -7,16 +7,18 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import SignupScreen from "./Screens/SignupScreen";
 import LoginScreen from "./Screens/LoginScreen";
-
-import { AppRegistry } from "react-native";
+import FirstTimeScreen from "./Screens/FirstTimeScreen";
 import { ApolloProvider } from "@apollo/react-hooks";
-import { ApolloClient } from 'apollo-client';
-import { InMemoryCache, NormalizedCacheObject } from 'apollo-cache-inmemory';
-import { HttpLink } from 'apollo-link-http';
+import { ApolloClient } from "apollo-client";
+import { InMemoryCache } from "apollo-cache-inmemory";
+import { HttpLink } from "apollo-link-http";
+import { AppRegistry } from "react-native";
+
+import { Provider as PaperProvider } from "react-native-paper";
 
 const cache = new InMemoryCache();
 const link = new HttpLink({
-  uri: 'https://salty-thicket-40672.herokuapp.com/graphql'
+  uri: "https://salty-thicket-40672.herokuapp.com/"
 });
 
 const client = new ApolloClient({
@@ -26,29 +28,48 @@ const client = new ApolloClient({
 
 const Stack = createStackNavigator();
 export default function App() {
-    const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [isLoggedIn , setIsLoggedIn] = useState(false);
+  const SetLoginHandler = () => {
+      setIsLoggedIn(true);
+  }
+  useEffect(
+    () => async () => {
+      await Font.loadAsync({
+        Roboto: require("./Fonts/Roboto-Regular.ttf"),
+        Roboto_medium: require("./Fonts/Roboto-Medium.ttf"),
+        ...Ionicons.font
+      });
+      setIsReady(true);
+    },
+    []
+  );
 
-    useEffect(async () => {
-        await Font.loadAsync({
-            Roboto: require("native-base/Fonts/Roboto.ttf"),
-            Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
-            ...Ionicons.font
-        });
-        setIsReady(true);
-    }, []);
+  if (!isReady) {
+    return <AppLoading />;
+  }
 
-    if (!isReady) {
-        return <AppLoading />;
-    }
-
-    return (
-        <ApolloProvider client={client}>
-            <NavigationContainer>
-                <Stack.Navigator initialRouteName="Login">
-                    <Stack.Screen name="Login" component={LoginScreen} />
-                    <Stack.Screen name="Signup" component={SignupScreen} />
-                </Stack.Navigator>
-            </NavigationContainer>
-        </ApolloProvider>
-    );
+  return (
+    <ApolloProvider client={client}>
+      <PaperProvider>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Login">
+            {!isLoggedIn ? (
+              <>
+                <Stack.Screen initialParams={{SetLoggedIn : SetLoginHandler, temp: 20}} name="Login" component={LoginScreen} />
+                <Stack.Screen name="Signup" component={SignupScreen} />
+              </>
+            ) : (
+              <Stack.Screen
+                name="FirstTimeScreen"
+                component={FirstTimeScreen}
+              />
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </PaperProvider>
+    </ApolloProvider>
+  );
 }
+
+AppRegistry.registerComponent("App", App);
